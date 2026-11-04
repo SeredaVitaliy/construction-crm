@@ -15,3 +15,6 @@ dist/
 # локальный стенд e2e
 e2e/.pgrst.conf
 e2e/screenshots/
+
+# netlify
+.netlify
