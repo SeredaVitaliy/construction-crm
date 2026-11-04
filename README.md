@@ -73,7 +73,7 @@ PGHOST=localhost PGUSER=postgres npm run test:db
 ## Структура
 
 ```
-supabase/migrations/   001 схема · 002 переходы статусов и история · 003 гранты и RLS
+supabase/migrations/   001 схема · 002 переходы статусов и история · 003 гранты и RLS · 004 закрытие служебных функций
 supabase/seed.sql      демо-данные
 supabase/tests/        тесты доступа
 e2e/                   локальная копия Supabase + браузерный сценарий всех ролей
