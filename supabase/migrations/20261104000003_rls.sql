@@ -33,6 +33,8 @@ revoke execute on function public.change_task_status(uuid, public.task_status, t
 grant  execute on function public.change_task_status(uuid, public.task_status, text) to authenticated;
 revoke execute on function public.is_manager() from public, anon;
 grant  execute on function public.is_manager() to authenticated;
+revoke execute on function public.status_label(public.task_status) from anon;
+revoke execute on function public.transition_actor(public.task_status, public.task_status) from anon;
 revoke execute on function public.handle_new_user()      from public, anon, authenticated;
 revoke execute on function public.tasks_before_insert()  from public, anon, authenticated;
 revoke execute on function public.tasks_before_update()  from public, anon, authenticated;

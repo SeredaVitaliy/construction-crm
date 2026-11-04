@@ -19,6 +19,22 @@ as $$
   );
 $$;
 
+-- Человекочитаемое название статуса — для сообщений об ошибках
+create function public.status_label(p public.task_status)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p
+    when 'new'         then 'Новая'
+    when 'in_progress' then 'В работе'
+    when 'review'      then 'На проверке'
+    when 'accepted'    then 'Принята'
+    when 'rework'      then 'На доработке'
+  end;
+$$;
+
 -- ---------------------------------------------------------------------
 -- Таблица разрешённых переходов в одном месте.
 -- Возвращает, кто может сделать переход: 'manager' | 'assignee' | null.
@@ -106,7 +122,8 @@ begin
     v_actor := public.transition_actor(old.status, new.status);
 
     if v_actor is null then
-      raise exception 'Переход % → % запрещён', old.status, new.status
+      raise exception 'Переход «%» → «%» запрещён',
+        public.status_label(old.status), public.status_label(new.status)
         using errcode = 'P0001';
     end if;
 
@@ -205,7 +222,8 @@ begin
   end if;
 
   if v_task.status = p_to then
-    raise exception 'Задача уже в статусе %', p_to using errcode = 'P0001';
+    raise exception 'Задача уже в статусе «%». Обновите страницу.', public.status_label(p_to)
+      using errcode = 'P0001';
   end if;
 
   -- true = настройка живёт только до конца транзакции
