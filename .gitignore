@@ -11,3 +11,7 @@ dist/
 
 # служебный контекст ассистента
 .assistant-context.md
+
+# локальный стенд e2e
+e2e/.pgrst.conf
+e2e/screenshots/
