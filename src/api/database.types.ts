@@ -1,9 +1,3 @@
-// Типы базы для supabase-js. Формат совпадает с тем, что генерирует
-// `npx supabase gen types typescript --project-id <id>`, — после создания
-// проекта файл можно перегенерировать этой командой и сравнить.
-//
-// Это контракт между базой и фронтом: если меняется миграция, меняется и этот файл.
-
 export type AppRole = 'manager' | 'executor';
 export type TaskStatus = 'new' | 'in_progress' | 'review' | 'accepted' | 'rework';
 
@@ -18,8 +12,8 @@ export type Database = {
           role: AppRole;
           created_at: string;
         };
-        Insert: never; // профили создаёт только триггер на auth.users
-        Update: never; // через API менять нельзя (нет гранта)
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       objects: {
@@ -46,7 +40,6 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        // status, author_id, created_at клиент не передаёт: их ставит база
         Insert: {
           title: string;
           description?: string;
@@ -87,13 +80,13 @@ export type Database = {
         Row: {
           id: number;
           task_id: string;
-          from_status: TaskStatus | null; // null = задача создана
+          from_status: TaskStatus | null;
           to_status: TaskStatus;
           changed_by: string;
           comment: string | null;
           created_at: string;
         };
-        Insert: never; // пишет только триггер
+        Insert: never;
         Update: never;
         Relationships: [
           {

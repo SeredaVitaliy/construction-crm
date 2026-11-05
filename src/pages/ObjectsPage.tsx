@@ -14,7 +14,6 @@ export function ObjectsPage() {
   const isManager = profile.role === 'manager';
   const { message } = App.useApp();
   const { data, loading, error, reload } = useAsync(fetchObjects, []);
-  // undefined — модалка закрыта, null — создание, объект — редактирование
   const [editing, setEditing] = useState<CrmObject | null | undefined>(undefined);
 
   const save = async (values: { name: string; address: string }) => {

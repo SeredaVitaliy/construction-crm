@@ -18,7 +18,6 @@ export function ObjectPage() {
   const { message } = App.useApp();
 
   const object = useAsync(() => fetchObject(id), [id]);
-  // Исполнителю RLS вернёт только его задачи на этом объекте
   const tasks = useAsync(() => fetchTasksByObject(id), [id]);
   const [creating, setCreating] = useState(false);
 
@@ -36,7 +35,6 @@ export function ObjectPage() {
   if (object.loading) return <PageSpinner />;
   if (object.error) return <LoadError message={object.error} onRetry={object.reload} />;
   if (!object.data) {
-    // Для исполнителя чужой объект неотличим от несуществующего — так и задумано
     return <Result status="404" title="Объект не найден" extra={<Link to="/objects">К списку объектов</Link>} />;
   }
 

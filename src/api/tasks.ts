@@ -9,7 +9,6 @@ export type TaskInput = {
   assignee_id: string;
 };
 
-// У tasks две ссылки на profiles (исполнитель и автор), поэтому имя связи указано явно
 const TASK_LIST_FIELDS =
   'id, title, status, created_at, object_id, assignee_id, object:objects(id, name), assignee:profiles!tasks_assignee_id_fkey(full_name)';
 
@@ -51,13 +50,12 @@ export async function fetchTaskHistory(taskId: string) {
       .from('task_history')
       .select('*, author:profiles!task_history_changed_by_fkey(full_name)')
       .eq('task_id', taskId)
-      .order('id'), // по id: у шагов одной транзакции одинаковое время
+      .order('id'),
   );
 }
 
 export type HistoryItem = NonNullable<Awaited<ReturnType<typeof fetchTaskHistory>>>[number];
 
-// status и author_id не передаём: их ставит база
 export async function createTask(input: TaskInput) {
   return unwrap(await supabase.from('tasks').insert(input).select('id').single());
 }
@@ -70,7 +68,6 @@ export async function deleteTask(id: string) {
   unwrap(await supabase.from('tasks').delete().eq('id', id));
 }
 
-// Единственный способ сменить статус. Все правила проверяет база.
 export async function changeTaskStatus(taskId: string, to: TaskStatus, comment?: string) {
   return unwrap(
     await supabase.rpc('change_task_status', {

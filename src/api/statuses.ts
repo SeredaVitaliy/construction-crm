@@ -8,7 +8,6 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
   rework: 'На доработке',
 };
 
-// Цвета для antd <Tag color=...>
 export const STATUS_COLOR: Record<TaskStatus, string> = {
   new: 'default',
   in_progress: 'processing',

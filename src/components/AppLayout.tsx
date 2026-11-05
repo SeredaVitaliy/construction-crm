@@ -7,7 +7,6 @@ export function AppLayout() {
   const profile = useProfile();
   const { signOut } = useAuth();
   const { pathname } = useLocation();
-  // На узком экране прячем имя и подпись кнопки, чтобы шапка не ломалась
   const { md } = Grid.useBreakpoint();
 
   const items = [

@@ -14,7 +14,6 @@ import { LoadError } from '@/components/LoadError';
 import { StatusTag } from '@/components/StatusTag';
 import { TaskFormModal } from '@/components/TaskFormModal';
 
-// antd Timeline понимает только базовые цвета
 const TIMELINE_COLOR: Record<string, string> = { default: 'gray', processing: 'blue', warning: 'orange', success: 'green', error: 'red' };
 
 export function TaskPage() {
@@ -44,7 +43,6 @@ export function TaskPage() {
       message.success(`Статус: ${STATUS_LABEL[action.to]}`);
       setCommentFor(null);
     } catch (e) {
-      // Если интерфейс показал устаревшую кнопку (статус сменил кто-то другой) — база откажет
       message.error((e as Error).message);
     } finally {
       setPending(null);
@@ -76,7 +74,6 @@ export function TaskPage() {
   if (task.loading && !task.data) return <PageSpinner />;
   if (task.error) return <LoadError message={task.error} onRetry={task.reload} />;
   if (!task.data) {
-    // Чужая задача для исполнителя выглядит так же, как несуществующая
     return <Result status="404" title="Задача не найдена" extra={<Link to="/objects">К объектам</Link>} />;
   }
 
@@ -131,7 +128,6 @@ export function TaskPage() {
           ]}
         />
 
-        {/* Только действия, доступные этому пользователю в этом статусе */}
         {actions.length > 0 && (
           <Space wrap style={{ marginTop: 16 }}>
             {actions.map((a) => (

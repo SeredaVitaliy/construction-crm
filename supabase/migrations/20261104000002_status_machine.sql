@@ -1,11 +1,3 @@
--- =====================================================================
--- 2. ЖИЗНЕННЫЙ ЦИКЛ ЗАДАЧИ: кто, из какого статуса, в какой.
---    Вся проверка живёт в базе. Фронт только показывает кнопки.
--- =====================================================================
-
--- Текущий пользователь — постановщик?
--- security definer: читает profiles в обход RLS, иначе политики,
--- которые вызывают эту функцию, зациклились бы сами на себя.
 create function public.is_manager()
 returns boolean
 language sql
@@ -19,7 +11,6 @@ as $$
   );
 $$;
 
--- Человекочитаемое название статуса — для сообщений об ошибках
 create function public.status_label(p public.task_status)
 returns text
 language sql
@@ -35,11 +26,6 @@ as $$
   end;
 $$;
 
--- ---------------------------------------------------------------------
--- Таблица разрешённых переходов в одном месте.
--- Возвращает, кто может сделать переход: 'manager' | 'assignee' | null.
--- null = переход запрещён.
--- ---------------------------------------------------------------------
 create function public.transition_actor(p_from public.task_status, p_to public.task_status)
 returns text
 language sql
@@ -56,10 +42,6 @@ as $$
   end;
 $$;
 
--- ---------------------------------------------------------------------
--- BEFORE INSERT: новая задача всегда «Новая», автор — тот, кто создаёт.
--- Исполнителем можно назначить только пользователя с ролью executor.
--- ---------------------------------------------------------------------
 create function public.tasks_before_insert()
 returns trigger
 language plpgsql
@@ -91,10 +73,6 @@ create trigger tasks_before_insert
   before insert on public.tasks
   for each row execute function public.tasks_before_insert();
 
--- ---------------------------------------------------------------------
--- BEFORE UPDATE: главный «охранник» статусов.
--- Срабатывает при ЛЮБОМ обновлении задачи, откуда бы оно ни пришло.
--- ---------------------------------------------------------------------
 create function public.tasks_before_update()
 returns trigger
 language plpgsql
@@ -105,7 +83,6 @@ declare
   v_actor   text;
   v_comment text := nullif(trim(current_setting('app.status_comment', true)), '');
 begin
-  -- Неизменяемые поля
   new.id         := old.id;
   new.author_id  := old.author_id;
   new.created_at := old.created_at;
@@ -142,8 +119,6 @@ begin
         using errcode = '23514';
     end if;
 
-    -- Статус и исполнитель меняются разными запросами, чтобы в истории
-    -- было однозначно видно, кто и для кого сделал переход.
     if new.assignee_id is distinct from old.assignee_id then
       raise exception 'Нельзя одновременно менять статус и исполнителя'
         using errcode = 'P0001';
@@ -158,9 +133,6 @@ create trigger tasks_before_update
   before update on public.tasks
   for each row execute function public.tasks_before_update();
 
--- ---------------------------------------------------------------------
--- AFTER INSERT / UPDATE: запись в историю. Единственный путь в task_history.
--- ---------------------------------------------------------------------
 create function public.tasks_write_history()
 returns trigger
 language plpgsql
@@ -186,13 +158,6 @@ create trigger tasks_write_history
   after insert or update on public.tasks
   for each row execute function public.tasks_write_history();
 
--- ---------------------------------------------------------------------
--- RPC для фронта: supabase.rpc('change_task_status', {...})
--- Единственный способ сменить статус через API: колонку status
--- напрямую обновлять нельзя (см. гранты в миграции 3).
--- Функция только находит задачу и передаёт комментарий,
--- а все правила проверяет триггер tasks_before_update.
--- ---------------------------------------------------------------------
 create function public.change_task_status(
   p_task_id uuid,
   p_to      public.task_status,
@@ -210,8 +175,6 @@ begin
     raise exception 'Не авторизован' using errcode = '42501';
   end if;
 
-  -- Чужую задачу исполнитель «не видит»: отвечаем так же, как на несуществующую,
-  -- чтобы нельзя было перебором узнать, какие задачи есть в системе.
   select * into v_task from public.tasks
   where id = p_task_id
     and (public.is_manager() or assignee_id = auth.uid())
@@ -226,7 +189,6 @@ begin
       using errcode = 'P0001';
   end if;
 
-  -- true = настройка живёт только до конца транзакции
   perform set_config('app.status_comment', coalesce(p_comment, ''), true);
 
   update public.tasks set status = p_to where id = p_task_id

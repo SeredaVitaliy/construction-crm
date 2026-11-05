@@ -1,4 +1,3 @@
-// Браузерный сценарий всех ролей. Запуск — e2e/run.sh (см. e2e/README.md)
 const { chromium } = require('playwright');
 const B = 'http://localhost:5173', PW = 'Demo12345!', SH = require('path').join(__dirname, 'screenshots') + '/';
 const PETROV_TASK = process.env.PETROV_TASK;
@@ -28,7 +27,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
 (async () => {
   const browser = await chromium.launch();
 
-  // --- неверный пароль
   {
     const ctx = await browser.newContext(); const page = await ctx.newPage();
     await login(page, 'ivanov@example.com', 'wrong');
@@ -37,7 +35,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
     await shot(page, 'login-error'); await ctx.close();
   }
 
-  // --- Иванов
   const iv = await newUser(browser, 'ivanov@example.com');
   let p = iv.page;
   await p.getByRole('link', { name: 'ЖК «Северный»' }).waitFor();
@@ -78,7 +75,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   ok(true, 'чужая задача по прямой ссылке → «не найдена»');
   await shot(p, 'executor-foreign-task');
 
-  // --- Постановщик
   const m = await newUser(browser, 'manager@example.com');
   p = m.page;
   await p.getByRole('link', { name: 'Склад «Южный»' }).waitFor();
@@ -100,7 +96,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   ok(true, 'возврат на доработку с комментарием, комментарий в истории');
   await shot(p, 'manager-task-rework');
 
-  // объект: создать, задача: создать/изменить/удалить
   await p.goto(B + '/objects');
   await p.getByRole('button', { name: 'Добавить объект' }).click();
   await p.getByRole('dialog').getByLabel('Название').fill('Коттедж в Зеленоградске');
@@ -126,7 +121,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   ok(true, 'постановщик редактирует задачу');
   await shot(p, 'manager-task-card');
 
-  // удалить объект с задачей нельзя
   await p.goto(B + '/objects');
   const row = p.locator('.ant-table-row').filter({ hasText: 'Коттедж в Зеленоградске' });
   await row.getByRole('button', { name: 'Удалить' }).click();
@@ -134,7 +128,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   await p.getByText('Нельзя удалить: есть связанные задачи').waitFor();
   ok(true, 'объект с задачами не удаляется, понятная ошибка');
 
-  // Петров: видит новую задачу в «Моих задачах»
   const pt = await newUser(browser, 'petrov@example.com');
   await pt.page.goto(B + '/my-tasks');
   await pt.page.getByRole('link', { name: 'Устройство кровли (утеплённой)' }).waitFor();
@@ -143,7 +136,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   await pt.page.getByText('Задача не найдена').waitFor();
   ok(true, 'Петров не открывает задачу Иванова');
 
-  // удалить задачу, потом объект
   await p.goto(B + '/objects');
   await p.getByRole('link', { name: 'Коттедж в Зеленоградске' }).click();
   await p.getByRole('link', { name: 'Устройство кровли (утеплённой)' }).click();
@@ -156,7 +148,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   await p.getByText('Объект удалён').waitFor();
   ok(true, 'постановщик удаляет задачу и пустой объект');
 
-  // Иванов берёт задачу с доработки
   p = iv.page;
   await p.goto(taskUrl);
   await statusIs(p, 'На доработке');
@@ -165,7 +156,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   ok(await p.locator('.ant-timeline-item').count() === 5, 'доработка → в работе, история из 5 шагов');
   await shot(p, 'executor-task-history');
 
-  // устаревшая кнопка: два окна, статус сменили в другом
   await p.getByRole('button', { name: 'Отправить на проверку' }).waitFor();
   const p2 = await iv.ctx.newPage(); await p2.goto(taskUrl);
   await p2.getByRole('button', { name: 'Отправить на проверку' }).click();
@@ -175,7 +165,6 @@ const statusIs = async (page, label) => page.locator('.ant-card-head').first().g
   await statusIs(p, 'На проверке');
   ok(true, 'устаревшая кнопка: база отказала, экран обновился');
 
-  // выход
   await p.getByRole('button', { name: 'Выйти' }).click();
   await p.waitForURL('**/login');
   await p.goto(B + '/objects'); await p.waitForURL('**/login');

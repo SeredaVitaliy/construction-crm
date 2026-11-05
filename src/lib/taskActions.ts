@@ -9,8 +9,6 @@ export type TaskAction = {
 
 type Rule = TaskAction & { from: TaskStatus; who: 'assignee' | 'manager' };
 
-// Зеркало правил из базы (transition_actor в 002_status_machine.sql) — ТОЛЬКО для показа кнопок.
-// Настоящую проверку делает триггер: если таблицы разойдутся, база откажет, данные не испортятся.
 const RULES: Rule[] = [
   { from: 'new', to: 'in_progress', who: 'assignee', label: 'Взять в работу', needsComment: false },
   { from: 'in_progress', to: 'review', who: 'assignee', label: 'Отправить на проверку', needsComment: false },
@@ -26,6 +24,6 @@ export function getAvailableActions(
   return RULES.filter((rule) => {
     if (rule.from !== task.status) return false;
     if (rule.who === 'manager') return profile.role === 'manager';
-    return task.assignee_id === profile.id; // именно назначенный, а не любой исполнитель
+    return task.assignee_id === profile.id;
   }).map(({ to, label, needsComment, danger }) => ({ to, label, needsComment, danger }));
 }

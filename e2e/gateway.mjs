@@ -1,4 +1,3 @@
-// Мини-заглушка Supabase: /auth/v1 (вход по паролю, refresh, user, logout) + прокси /rest/v1 → PostgREST
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,7 +11,7 @@ export const sign = (payload) => {
   const h = b64({ alg: 'HS256', typ: 'JWT' }), p = b64(payload);
   return `${h}.${p}.${crypto.createHmac('sha256', SECRET).update(`${h}.${p}`).digest('base64url')}`;
 };
-// `node gateway.mjs anon-key` — напечатать публичный ключ (JWT с ролью anon) и выйти
+
 if (process.argv[2] === 'anon-key') { console.log(sign({ role: 'anon', iss: 'supabase' })); process.exit(0); }
 
 const verify = (t) => {
@@ -21,7 +20,7 @@ const verify = (t) => {
   return JSON.parse(Buffer.from(p, 'base64url').toString());
 };
 const users = Object.fromEntries(
-  execFileSync('psql', ['-d', 'e2e', '-Atc', 'select email, id from auth.users'])  // PGHOST/PGPORT/PGUSER из окружения
+  execFileSync('psql', ['-d', 'e2e', '-Atc', 'select email, id from auth.users'])
     .toString().trim().split('\n').map((l) => l.split('|')),
 );
 const refresh = new Map();

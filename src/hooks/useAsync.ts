@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-// Загрузка данных: { data, loading, error, reload }.
-// Защита от гонки: если deps поменялись, ответ старого запроса игнорируется.
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
   const [state, setState] = useState<{ data: T | null; loading: boolean; error: string | null }>({
     data: null,
@@ -19,7 +17,6 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);

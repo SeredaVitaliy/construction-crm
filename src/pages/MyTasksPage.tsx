@@ -15,11 +15,9 @@ const FILTERS: { value: 'all' | TaskStatus; label: string }[] = [
 
 export function MyTasksPage() {
   const profile = useProfile();
-  // Фильтр в URL: переживает F5 и «назад» из карточки задачи
   const [params, setParams] = useSearchParams();
   const status = (params.get('status') ?? 'all') as 'all' | TaskStatus;
 
-  // Здесь фильтр по исполнителю — смысл экрана, а не защита (защищает RLS)
   const { data, loading, error, reload } = useAsync(() => fetchTasksByAssignee(profile.id), [profile.id]);
   const visible = (data ?? []).filter((t) => status === 'all' || t.status === status);
 

@@ -7,7 +7,6 @@ export function useAuth() {
   return ctx;
 }
 
-// Для приватных страниц: профиль гарантированно есть (PrivateRoute не пустит без него)
 export function useProfile() {
   const { profile } = useAuth();
   if (!profile) throw new Error('Профиль не загружен');

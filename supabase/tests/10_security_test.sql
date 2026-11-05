@@ -1,19 +1,12 @@
--- =====================================================================
--- Тесты доступа «в обход интерфейса». Запуск: ./supabase/tests/run.sh
--- Каждый шаг выполняется от роли authenticated с JWT конкретного пользователя —
--- ровно так же, как запрос из браузера через supabase-js / REST.
--- =====================================================================
 \set ON_ERROR_STOP on
 \set QUIET on
 \o /dev/null
 
--- Тестовые пользователи (в Supabase их создают в Dashboard → Authentication)
 insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'manager@test.local', '{"full_name":"Анна Постановщик"}', '{"role":"manager"}'),
   ('00000000-0000-0000-0000-00000000000b', 'ivanov@test.local',  '{"full_name":"Иван Иванов"}',      '{}'),
   ('00000000-0000-0000-0000-00000000000c', 'petrov@test.local',  '{"full_name":"Пётр Петров"}',      '{"role":"executor"}');
 
--- ---------- помощники ----------
 create schema t;
 grant usage on schema t to authenticated, anon;
 
@@ -23,7 +16,6 @@ begin
   raise notice 'ok   %', msg;
 end $$;
 
--- Ожидаем, что запрос упадёт с ошибкой, текст которой содержит pattern
 create function t.fails(q text, pattern text, msg text) returns void language plpgsql as $$
 begin
   execute q;
@@ -36,7 +28,6 @@ exception when others then
   raise notice 'ok   % (%)', msg, sqlerrm;
 end $$;
 
--- Сколько строк затронул запрос
 create function t.affected(q text) returns int language plpgsql as $$
 declare n int; begin execute q; get diagnostics n = row_count; return n; end $$;
 
@@ -54,10 +45,8 @@ grant execute on function t.login(text) to authenticated, anon;
 select t.ok((select role from profiles where email='manager@test.local') = 'manager', 'профиль постановщика создан триггером с ролью manager');
 select t.ok((select role from profiles where email='ivanov@test.local') = 'executor', 'по умолчанию роль — executor');
 
--- =====================================================================
 \echo '--- Постановщик'
--- Фиксированные id задаём служебной ролью (клиенту колонка id недоступна),
--- но с JWT постановщика — чтобы сработали триггеры автора и истории.
+
 select t.login(:M);
 insert into objects (id, name, address) values
   ('10000000-0000-0000-0000-000000000001', 'ЖК Северный', 'ул. Ленина, 1'),
@@ -94,7 +83,6 @@ select t.fails($$ select change_task_status('20000000-0000-0000-0000-00000000000
 select t.fails($$ select change_task_status('20000000-0000-0000-0000-000000000001', 'accepted') $$,
                'запрещён', 'new → accepted запрещён даже постановщику');
 
--- =====================================================================
 \echo '--- Исполнитель Иванов: чужое не видно и не меняется'
 select t.login(:I);
 

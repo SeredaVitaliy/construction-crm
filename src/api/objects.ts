@@ -3,7 +3,6 @@ import { unwrap } from '@/lib/errors';
 
 export type ObjectInput = { name: string; address: string };
 
-// Без фильтров: что вернуть исполнителю, решает RLS
 export async function fetchObjects() {
   return unwrap(await supabase.from('objects').select('*').order('created_at'));
 }

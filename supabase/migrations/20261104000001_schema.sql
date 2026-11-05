@@ -1,19 +1,13 @@
--- =====================================================================
--- 1. СХЕМА: роли, профили, объекты, задачи, история статусов
--- =====================================================================
-
 create type public.app_role as enum ('manager', 'executor');
 
 create type public.task_status as enum (
-  'new',          -- Новая
-  'in_progress',  -- В работе
-  'review',       -- На проверке
-  'accepted',     -- Принята
-  'rework'        -- На доработке
+  'new',
+  'in_progress',
+  'review',
+  'accepted',
+  'rework'
 );
 
--- Профиль = пользователь Supabase Auth + роль в системе.
--- Роль меняется только из дашборда / SQL (через API её поменять нельзя).
 create table public.profiles (
   id         uuid primary key references auth.users (id) on delete cascade,
   email      text not null,
@@ -34,7 +28,6 @@ create table public.tasks (
   id          uuid primary key default gen_random_uuid(),
   title       text not null check (length(trim(title)) > 0),
   description text not null default '',
-  -- объект с задачами удалить нельзя: сначала нужно разобраться с задачами
   object_id   uuid not null references public.objects (id) on delete restrict,
   assignee_id uuid not null references public.profiles (id),
   status      public.task_status not null default 'new',
@@ -46,11 +39,10 @@ create table public.tasks (
 create index tasks_object_id_idx   on public.tasks (object_id);
 create index tasks_assignee_id_idx on public.tasks (assignee_id);
 
--- Журнал смен статуса. Пишется только триггером, через API — только чтение.
 create table public.task_history (
   id          bigint generated always as identity primary key,
   task_id     uuid not null references public.tasks (id) on delete cascade,
-  from_status public.task_status,            -- null = задача только что создана
+  from_status public.task_status,
   to_status   public.task_status not null,
   changed_by  uuid not null references public.profiles (id),
   comment     text,
@@ -59,12 +51,6 @@ create table public.task_history (
 
 create index task_history_task_id_idx on public.task_history (task_id, created_at);
 
--- ---------------------------------------------------------------------
--- Профиль создаётся автоматически при создании пользователя в Auth.
--- Роль по умолчанию — исполнитель (безопасный вариант). Постановщиком
--- пользователя делают вручную: в app_metadata ({"role":"manager"})
--- или update public.profiles. app_metadata пользователь сам менять не может.
--- ---------------------------------------------------------------------
 create function public.handle_new_user()
 returns trigger
 language plpgsql

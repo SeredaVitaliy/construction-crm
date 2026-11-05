@@ -16,7 +16,6 @@ type Props = {
 
 export function TaskFormModal({ open, objectId, initial, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<TaskInput>();
-  // Модалку открывает только постановщик, ему RLS отдаёт всех исполнителей и все объекты
   const executors = useAsync(() => (open ? fetchExecutors() : Promise.resolve([])), [open]);
   const objects = useAsync(() => (open && initial ? fetchObjects() : Promise.resolve([])), [open, !!initial]);
 
@@ -51,7 +50,6 @@ export function TaskFormModal({ open, objectId, initial, onCancel, onSubmit }: P
             options={(executors.data ?? []).map((e) => ({ value: e.id, label: e.full_name || e.email }))}
           />
         </Form.Item>
-        {/* При редактировании задачу можно перенести на другой объект */}
         <Form.Item name="object_id" label="Объект" hidden={!initial} rules={[{ required: true }]}>
           <Select
             loading={objects.loading}

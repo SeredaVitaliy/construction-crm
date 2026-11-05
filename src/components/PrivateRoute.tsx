@@ -22,7 +22,6 @@ export function PrivateRoute() {
   return <Outlet />;
 }
 
-// Страница только для постановщика (UI-ограничение; данные всё равно защищены RLS)
 export function ExecutorOnly() {
   const profile = useAuth().profile;
   return profile?.role === 'executor' ? <Outlet /> : <Navigate to="/objects" replace />;

@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Локальная копия Supabase: Postgres (миграции + сиды) → PostgREST → заглушка Auth на :54321,
-# затем Vite и браузерный сценарий Playwright. Нужны: psql, postgrest, node, playwright.
-# PGHOST/PGPORT/PGUSER — суперпользователь локального Postgres.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SECRET=$(openssl rand -hex 32)

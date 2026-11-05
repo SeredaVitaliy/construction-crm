@@ -6,7 +6,6 @@ import type { Profile } from '@/api/database.types';
 
 type AuthState = {
   session: Session | null;
-  // Роль берём из profiles, а не из user_metadata: metadata пользователь может менять сам
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -20,7 +19,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Токены хранит и обновляет сам supabase-js; мы только слушаем изменения сессии
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -36,8 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // Профиль грузим отдельно от колбэка onAuthStateChange: внутри него нельзя
-  // ждать других запросов supabase (известная ловушка — дедлок клиента)
   const userId = session?.user.id;
   useEffect(() => {
     if (!userId) return;

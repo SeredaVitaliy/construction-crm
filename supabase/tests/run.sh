@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Прогон миграций и тестов безопасности на локальном Postgres (не Supabase).
-# Использование: PGHOST=... PGPORT=... PGUSER=postgres ./supabase/tests/run.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -1,13 +1,3 @@
--- =====================================================================
--- ДЕМО-ДАННЫЕ. Запускать в Supabase → SQL Editor ПОСЛЕ миграций и ПОСЛЕ того,
--- как в Authentication → Users созданы три пользователя (Auto Confirm User):
---   manager@example.com, ivanov@example.com, petrov@example.com
---
--- Задачи проводятся по статусам через ту же функцию change_task_status,
--- что и в приложении: скрипт «представляется» нужным пользователем,
--- поэтому история получается настоящей, со всеми проверками.
--- =====================================================================
-
 update public.profiles set role = 'manager',  full_name = 'Анна Смирнова (постановщик)' where email = 'manager@example.com';
 update public.profiles set role = 'executor', full_name = 'Иван Иванов'                  where email = 'ivanov@example.com';
 update public.profiles set role = 'executor', full_name = 'Пётр Петров'                  where email = 'petrov@example.com';
@@ -24,24 +14,20 @@ begin
     raise exception 'Сначала создайте трёх пользователей в Authentication → Users';
   end if;
 
-  -- «войти» постановщиком (true = только до конца этого скрипта)
   perform set_config('request.jwt.claims', json_build_object('sub', m)::text, true);
 
   insert into public.objects (name, address) values ('ЖК «Северный»',  'Калининград, ул. Горького, 120') returning id into o1;
   insert into public.objects (name, address) values ('Склад «Южный»',   'Калининград, ул. Дзержинского, 45') returning id into o2;
   insert into public.objects (name, address) values ('Офис на Ленинском', 'Калининград, Ленинский пр., 30') returning id into o3;
 
-  -- 1. Новая
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Разметка котлована', 'Вынести оси по проекту, акт разбивки', o1, iv);
 
-  -- 2. В работе
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Армирование плиты', 'Сетка 200×200, Ø12, защитный слой 40 мм', o1, iv) returning id into t;
   perform set_config('request.jwt.claims', json_build_object('sub', iv)::text, true);
   perform public.change_task_status(t, 'in_progress');
 
-  -- 3. На проверке
   perform set_config('request.jwt.claims', json_build_object('sub', m)::text, true);
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Монтаж стеллажей', 'Зона А, 12 секций', o2, pt) returning id into t;
@@ -49,7 +35,6 @@ begin
   perform public.change_task_status(t, 'in_progress');
   perform public.change_task_status(t, 'review', 'Смонтировано, фото в приложении');
 
-  -- 4. На доработке (с комментарием постановщика)
   perform set_config('request.jwt.claims', json_build_object('sub', m)::text, true);
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Покраска фасада', 'Цвет RAL 7035, два слоя', o2, pt) returning id into t;
@@ -59,7 +44,6 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', m)::text, true);
   perform public.change_task_status(t, 'rework', 'Подтёки у входной группы, перекрасить второй слой');
 
-  -- 5. Принята (прошла через доработку)
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Прокладка кабеля', 'Кабель ВВГнг 3×2.5 до щитовой', o3, iv) returning id into t;
   perform set_config('request.jwt.claims', json_build_object('sub', iv)::text, true);
@@ -73,7 +57,6 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', m)::text, true);
   perform public.change_task_status(t, 'accepted');
 
-  -- 6. Новая у второго исполнителя
   insert into public.tasks (title, description, object_id, assignee_id)
   values ('Уборка территории', 'Вывоз строительного мусора', o3, pt);
 end $$;

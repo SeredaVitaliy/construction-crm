@@ -5,7 +5,6 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# SPA: любые пути отдаём index.html, иначе F5 на /tasks/... даст 404
 [[redirects]]
   from = "/*"
   to = "/index.html"
