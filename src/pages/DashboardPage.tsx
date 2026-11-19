@@ -124,7 +124,7 @@ export function DashboardPage() {
         { to: '/tasks?overdue=1', value: overdue.length, label: 'просрочено', danger: overdue.length > 0 },
       ]
     : [
-        { to: '/tasks', value: open.length, label: 'задач в работе у вас' },
+        { to: '/tasks', value: open.length, label: 'открытых задач у вас' },
         { to: '/tasks?status=rework', value: rework.length, label: 'вернули на доработку', danger: rework.length > 0 },
         { to: '/tasks?status=review', value: review.length, label: 'на проверке' },
         { to: '/tasks?overdue=1', value: overdue.length, label: 'просрочено', danger: overdue.length > 0 },

@@ -89,7 +89,7 @@ export function TaskPage() {
       <Row gutter={[20, 20]}>
         <Col xs={24} lg={15}>
           <Flex vertical gap={20}>
-            <Card>
+            <Card className="task-main">
               <Flex justify="space-between" align="flex-start" gap={16} wrap>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Flex gap={10} align="center" wrap style={{ marginBottom: 10 }}>

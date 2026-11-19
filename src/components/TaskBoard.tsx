@@ -29,9 +29,10 @@ export function TaskBoard({ tasks, profile, showObject, showAssignee, onChanged 
   const drop = (status: TaskStatus) => (e: DragEvent) => {
     e.preventDefault();
     setOver(null);
-    const action = allowed.find((a) => a.to === status);
-    if (dragged && action) start(dragged.id, action);
     setDragId(null);
+    const task = tasks.find((t) => t.id === (e.dataTransfer.getData('text/plain') || dragId));
+    const action = task && getAvailableActions(task, profile).find((a) => a.to === status);
+    if (task && action) start(task.id, action);
   };
 
   return (
@@ -49,9 +50,9 @@ export function TaskBoard({ tasks, profile, showObject, showAssignee, onChanged 
               aria-label={STATUS_LABEL[status]}
               className={`board-col${canDrop ? ' can-drop' : ''}${canDrop && over === status ? ' over' : ''}`}
               onDragOver={(e) => {
-                if (!canDrop) return;
                 e.preventDefault();
-                setOver(status);
+                e.dataTransfer.dropEffect = canDrop ? 'move' : 'none';
+                if (canDrop) setOver(status);
               }}
               onDragLeave={() => setOver((o) => (o === status ? null : o))}
               onDrop={drop(status)}
@@ -79,6 +80,7 @@ export function TaskBoard({ tasks, profile, showObject, showAssignee, onChanged 
                     draggable={draggable}
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('text/plain', t.id);
                       setDragId(t.id);
                     }}
                     onDragEnd={() => {
@@ -96,7 +98,7 @@ export function TaskBoard({ tasks, profile, showObject, showAssignee, onChanged 
                       <PriorityMark priority={t.priority} withLabel={false} />
                       <Flex align="center" gap={8}>
                         {due && (
-                          <Typography.Text type={isOverdue(t) ? 'danger' : 'secondary'} style={{ fontSize: 12 }}>
+                          <Typography.Text type={isOverdue(t) ? 'danger' : 'secondary'} style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                             {due}
                           </Typography.Text>
                         )}

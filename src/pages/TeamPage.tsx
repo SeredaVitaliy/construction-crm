@@ -79,7 +79,7 @@ export function TeamPage() {
                   </div>
                   <Flex justify="space-between" align="center" style={{ marginTop: 10, fontSize: 13 }}>
                     <Link to={`/tasks?assignee=${p.id}`}>
-                      {open.length} в работе, {mine.length - open.length} принято
+                      {open.length} открыто, {mine.length - open.length} принято
                     </Link>
                     {overdue > 0 && <Tag color="error">просрочено: {overdue}</Tag>}
                   </Flex>
