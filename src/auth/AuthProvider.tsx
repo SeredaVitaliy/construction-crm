@@ -10,6 +10,7 @@ type AuthState = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  setProfile: (profile: Profile) => void;
 };
 
 export const AuthContext = createContext<AuthState | null>(null);
@@ -60,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut, setProfile }}>
+      {children}
+    </AuthContext.Provider>
   );
 }

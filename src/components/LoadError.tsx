@@ -5,9 +5,15 @@ export function LoadError({ message, onRetry }: { message: string; onRetry?: () 
     <Alert
       type="error"
       showIcon
-      message="Не удалось загрузить данные"
+      title="Не удалось загрузить данные"
       description={message}
-      action={onRetry && <Button size="small" onClick={onRetry}>Повторить</Button>}
+      action={
+        onRetry && (
+          <Button size="small" onClick={onRetry}>
+            Повторить
+          </Button>
+        )
+      }
     />
   );
 }

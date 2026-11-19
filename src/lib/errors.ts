@@ -5,11 +5,13 @@ export function errorText(error: PostgrestError | Error | null | undefined): str
   const code = 'code' in error ? error.code : undefined;
   switch (code) {
     case '23503':
-      return 'Нельзя удалить: есть связанные задачи. Сначала удалите или перенесите их.';
-    case '42501':
-      return error.message.startsWith('permission denied')
-        ? 'Недостаточно прав для этого действия'
+      return 'Нельзя удалить: есть связанные задачи или расходы. Сначала удалите или перенесите их.';
+    case '23514':
+      return error.message.includes('_check')
+        ? 'Проверьте значения: дата окончания не раньше начала, суммы — положительные'
         : error.message;
+    case '42501':
+      return error.message.startsWith('permission denied') ? 'Недостаточно прав для этого действия' : error.message;
     case 'PGRST116':
       return 'Запись не найдена или нет доступа';
     default:

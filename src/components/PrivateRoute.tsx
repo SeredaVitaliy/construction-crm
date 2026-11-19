@@ -8,7 +8,7 @@ export function PrivateRoute() {
   const location = useLocation();
 
   if (loading) return <PageSpinner />;
-  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   if (!profile) {
     return (
       <Result
@@ -22,7 +22,7 @@ export function PrivateRoute() {
   return <Outlet />;
 }
 
-export function ExecutorOnly() {
+export function ManagerOnly() {
   const profile = useAuth().profile;
-  return profile?.role === 'executor' ? <Outlet /> : <Navigate to="/objects" replace />;
+  return profile?.role === 'manager' ? <Outlet /> : <Navigate to="/" replace />;
 }

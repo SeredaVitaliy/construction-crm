@@ -7,4 +7,12 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => (id.includes('node_modules/@supabase') ? 'supabase' : undefined),
+      },
+    },
+  },
 });
