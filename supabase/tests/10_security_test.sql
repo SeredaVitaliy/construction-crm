@@ -181,5 +181,3 @@ select t.fails($$ select change_task_status('20000000-0000-0000-0000-00000000000
                'permission denied', 'anon не может вызвать RPC');
 reset role;
 
-\echo ''
-\echo 'ВСЕ ТЕСТЫ ПРОШЛИ'
