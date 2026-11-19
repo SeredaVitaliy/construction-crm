@@ -9,4 +9,7 @@ run() { psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$1"; }
 
 run tests/00_supabase_stub.sql
 for f in migrations/*.sql; do run "$f"; done
-run tests/10_security_test.sql
+for f in tests/[1-9]*_test.sql; do run "$f"; done
+
+echo ""
+echo "ВСЕ ТЕСТЫ ПРОШЛИ"

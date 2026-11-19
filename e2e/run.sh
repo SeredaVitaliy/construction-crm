@@ -5,7 +5,7 @@ SECRET=$(openssl rand -hex 32)
 
 psql -q -d postgres -c "drop database if exists e2e with (force)" -c "create database e2e"
 for f in supabase/tests/00_supabase_stub.sql supabase/migrations/*.sql; do psql -q -v ON_ERROR_STOP=1 -d e2e -f "$f"; done
-psql -q -d e2e -c "insert into auth.users(email) values ('manager@example.com'),('ivanov@example.com'),('petrov@example.com')" \
+psql -q -d e2e -c "insert into auth.users(email) values ('manager@example.com'),('ivanov@example.com'),('petrov@example.com'),('kozlov@example.com'),('sokolova@example.com')" \
   -c "do \$\$ begin if not exists (select 1 from pg_roles where rolname='authenticator') then create role authenticator login noinherit; end if; end \$\$" \
   -c "grant anon, authenticated to authenticator"
 psql -q -v ON_ERROR_STOP=1 -d e2e -f supabase/seed.sql
