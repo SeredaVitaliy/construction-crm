@@ -1,0 +1,24 @@
+name: Keep demo alive
+
+on:
+  schedule:
+    - cron: '17 6 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Запрос к базе демо-стенда
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "Не заданы переменные SUPABASE_URL и SUPABASE_PUBLISHABLE_KEY (Settings → Secrets and variables → Actions → Variables)"
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$SUPABASE_URL/rest/v1/objects?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "HTTP $code"
+          [ "$code" != "000" ] && [ "$code" -lt 500 ]

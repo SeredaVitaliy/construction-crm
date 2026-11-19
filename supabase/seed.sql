@@ -1,16 +1,13 @@
-update public.profiles set role = 'manager',  full_name = 'Анна Смирнова',   position = 'Руководитель проектов', phone = '+7 911 450-12-34' where email = 'manager@example.com';
-update public.profiles set role = 'executor', full_name = 'Иван Иванов',     position = 'Прораб',                phone = '+7 911 451-22-10' where email = 'ivanov@example.com';
-update public.profiles set role = 'executor', full_name = 'Пётр Петров',     position = 'Монтажник',             phone = '+7 911 452-33-21' where email = 'petrov@example.com';
-update public.profiles set role = 'executor', full_name = 'Олег Козлов',     position = 'Электрик',              phone = '+7 911 453-44-32' where email = 'kozlov@example.com';
-update public.profiles set role = 'executor', full_name = 'Мария Соколова',  position = 'Инженер ПТО',           phone = '+7 911 454-55-43' where email = 'sokolova@example.com';
+create schema if not exists demo;
+revoke all on schema demo from public;
 
-create function pg_temp.login(p_uid uuid) returns void language sql as $$
+create table if not exists demo.seed_age (task_id uuid primary key, age int not null);
+
+create or replace function demo.login(p_uid uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_uid)::text, true);
 $$;
 
-create table pg_temp.seed_age (task_id uuid primary key, age int not null);
-
-create function pg_temp.task(
+create or replace function demo.task(
   p_object   uuid,
   p_assignee uuid,
   p_title    text,
@@ -27,35 +24,35 @@ declare
   v_cur     public.task_status := 'new';
   i         int;
 begin
-  perform pg_temp.login(v_manager);
+  perform demo.login(v_manager);
   insert into public.tasks (title, description, object_id, assignee_id, priority, due_date)
   values (p_title, p_desc, p_object, p_assignee, p_priority,
           case when p_due is null then null else current_date + p_due end)
   returning id into v_id;
 
   for i in 1 .. coalesce(array_length(p_path, 1), 0) loop
-    perform pg_temp.login(
+    perform demo.login(
       case public.transition_actor(v_cur, p_path[i]) when 'manager' then v_manager else p_assignee end
     );
     perform public.change_task_status(v_id, p_path[i], p_comments[i]);
     v_cur := p_path[i];
   end loop;
 
-  insert into pg_temp.seed_age values (v_id, p_age);
+  insert into demo.seed_age values (v_id, p_age);
   return v_id;
 end;
 $$;
 
-create function pg_temp.comment(p_task uuid, p_author uuid, p_body text, p_hours_ago int) returns void language plpgsql as $$
+create or replace function demo.comment(p_task uuid, p_author uuid, p_body text, p_hours_ago int) returns void language plpgsql as $$
 declare v_id bigint;
 begin
-  perform pg_temp.login(p_author);
+  perform demo.login(p_author);
   insert into public.task_comments (task_id, body) values (p_task, p_body) returning id into v_id;
   update public.task_comments set created_at = now() - make_interval(hours => p_hours_ago) where id = v_id;
 end;
 $$;
 
-do $$
+create or replace function demo.reset() returns void language plpgsql as $fn$
 declare
   m  uuid := (select id from public.profiles where email = 'manager@example.com');
   iv uuid := (select id from public.profiles where email = 'ivanov@example.com');
@@ -65,11 +62,23 @@ declare
   o1 uuid; o2 uuid; o3 uuid; o4 uuid; o5 uuid;
   t  uuid;
 begin
+  delete from public.task_comments;
+  delete from public.expenses;
+  delete from public.tasks;
+  delete from public.objects;
+  delete from demo.seed_age;
+
+  update public.profiles set role = 'manager',  full_name = 'Анна Смирнова',   position = 'Руководитель проектов', phone = '+7 911 450-12-34' where email = 'manager@example.com';
+  update public.profiles set role = 'executor', full_name = 'Иван Иванов',     position = 'Прораб',                phone = '+7 911 451-22-10' where email = 'ivanov@example.com';
+  update public.profiles set role = 'executor', full_name = 'Пётр Петров',     position = 'Монтажник',             phone = '+7 911 452-33-21' where email = 'petrov@example.com';
+  update public.profiles set role = 'executor', full_name = 'Олег Козлов',     position = 'Электрик',              phone = '+7 911 453-44-32' where email = 'kozlov@example.com';
+  update public.profiles set role = 'executor', full_name = 'Мария Соколова',  position = 'Инженер ПТО',           phone = '+7 911 454-55-43' where email = 'sokolova@example.com';
+
   if m is null or iv is null or pt is null then
     raise exception 'Сначала создайте пользователей в Authentication → Users (минимум manager, ivanov, petrov)';
   end if;
 
-  perform pg_temp.login(m);
+  perform demo.login(m);
 
   insert into public.objects (name, address, status, client, description, budget, start_date, end_date)
   values ('ЖК «Северный»', 'Калининград, ул. Горького, 120', 'active', 'ООО «БалтСтрой Девелопмент»',
@@ -101,49 +110,49 @@ begin
           31000000, current_date - 90, current_date + 300)
   returning id into o5;
 
-  perform pg_temp.task(o1, iv, 'Разметка котлована', 'Вынести оси по проекту, составить акт разбивки.', 'high', -100, 118,
+  perform demo.task(o1, iv, 'Разметка котлована', 'Вынести оси по проекту, составить акт разбивки.', 'high', -100, 118,
     '{in_progress,review,accepted}', '{null,"Акт разбивки подписан",null}');
-  t := pg_temp.task(o1, iv, 'Армирование плиты', 'Сетка 200×200, Ø12, защитный слой 40 мм.', 'urgent', 3, 30,
+  t := demo.task(o1, iv, 'Армирование плиты', 'Сетка 200×200, Ø12, защитный слой 40 мм.', 'urgent', 3, 30,
     '{in_progress}');
-  perform pg_temp.comment(t, iv, 'Арматура Ø12 приедет только в четверг, пока вяжу первую захватку.', 26);
-  perform pg_temp.comment(t, m, 'Принято. Поставщика поторопила, обещают в среду.', 20);
-  perform pg_temp.task(o1, kz, 'Временное электроснабжение', 'Щит ВРУ, кабель до бытовок и крана.', 'high', -40, 90,
+  perform demo.comment(t, iv, 'Арматура Ø12 приедет только в четверг, пока вяжу первую захватку.', 26);
+  perform demo.comment(t, m, 'Принято. Поставщика поторопила, обещают в среду.', 20);
+  perform demo.task(o1, kz, 'Временное электроснабжение', 'Щит ВРУ, кабель до бытовок и крана.', 'high', -40, 90,
     '{in_progress,review,accepted}');
-  perform pg_temp.task(o1, sk, 'Исполнительная документация по фундаменту', 'Исполнительные схемы, акты скрытых работ.', 'medium', -2, 25,
+  perform demo.task(o1, sk, 'Исполнительная документация по фундаменту', 'Исполнительные схемы, акты скрытых работ.', 'medium', -2, 25,
     '{in_progress}');
-  perform pg_temp.task(o1, pt, 'Гидроизоляция стен паркинга', 'Обмазочная в 2 слоя + профилированная мембрана.', 'medium', 14, 6);
-  perform pg_temp.task(o1, iv, 'Опалубка колонн 1-го этажа', 'Щитовая опалубка, 24 колонны.', 'medium', 21, 2);
+  perform demo.task(o1, pt, 'Гидроизоляция стен паркинга', 'Обмазочная в 2 слоя + профилированная мембрана.', 'medium', 14, 6);
+  perform demo.task(o1, iv, 'Опалубка колонн 1-го этажа', 'Щитовая опалубка, 24 колонны.', 'medium', 21, 2);
 
-  t := pg_temp.task(o2, pt, 'Монтаж стеллажей', 'Зона А, 12 секций.', 'high', 1, 20,
+  t := demo.task(o2, pt, 'Монтаж стеллажей', 'Зона А, 12 секций.', 'high', 1, 20,
     '{in_progress,review}', '{null,"Смонтировано, фото в комментариях"}');
-  perform pg_temp.comment(t, pt, 'Все секции выставлены по уровню, анкеровка выполнена.', 5);
-  perform pg_temp.task(o2, pt, 'Покраска фасада', 'Цвет RAL 7035, два слоя.', 'medium', -5, 40,
+  perform demo.comment(t, pt, 'Все секции выставлены по уровню, анкеровка выполнена.', 5);
+  perform demo.task(o2, pt, 'Покраска фасада', 'Цвет RAL 7035, два слоя.', 'medium', -5, 40,
     '{in_progress,review,rework}', '{null,null,"Подтёки у входной группы, перекрасить второй слой"}');
-  perform pg_temp.task(o2, kz, 'Освещение складской зоны', 'Светильники LED 150 Вт, 64 шт.', 'medium', 10, 15,
+  perform demo.task(o2, kz, 'Освещение складской зоны', 'Светильники LED 150 Вт, 64 шт.', 'medium', 10, 15,
     '{in_progress,review}');
-  perform pg_temp.task(o2, sk, 'Пожарная сигнализация: проект', 'Согласовать проект АПС с заказчиком.', 'urgent', -7, 35,
+  perform demo.task(o2, sk, 'Пожарная сигнализация: проект', 'Согласовать проект АПС с заказчиком.', 'urgent', -7, 35,
     '{in_progress}');
-  perform pg_temp.task(o2, iv, 'Устройство пандуса', 'Бетонный пандус у ворот № 2.', 'low', 30, 1);
+  perform demo.task(o2, iv, 'Устройство пандуса', 'Бетонный пандус у ворот № 2.', 'low', 30, 1);
 
-  perform pg_temp.task(o3, iv, 'Прокладка кабеля', 'Кабель ВВГнг 3×2.5 до щитовой.', 'high', -60, 180,
+  perform demo.task(o3, iv, 'Прокладка кабеля', 'Кабель ВВГнг 3×2.5 до щитовой.', 'high', -60, 180,
     '{in_progress,review,rework,in_progress,review,accepted}', '{null,null,"Нет маркировки линий",null,"Маркировка нанесена",null}');
-  perform pg_temp.task(o3, kz, 'Слаботочные сети', 'СКС на 48 портов, видеонаблюдение.', 'medium', -40, 150,
+  perform demo.task(o3, kz, 'Слаботочные сети', 'СКС на 48 портов, видеонаблюдение.', 'medium', -40, 150,
     '{in_progress,review,accepted}');
-  perform pg_temp.task(o3, pt, 'Чистовая отделка', 'Покраска стен, монтаж потолка Армстронг.', 'medium', -15, 90,
+  perform demo.task(o3, pt, 'Чистовая отделка', 'Покраска стен, монтаж потолка Армстронг.', 'medium', -15, 90,
     '{in_progress,review,accepted}');
-  perform pg_temp.task(o3, sk, 'Акт приёмки объекта', 'Подготовить пакет документов для заказчика.', 'high', -10, 30,
+  perform demo.task(o3, sk, 'Акт приёмки объекта', 'Подготовить пакет документов для заказчика.', 'high', -10, 30,
     '{in_progress,review,accepted}');
 
-  perform pg_temp.task(o4, sk, 'Геология участка', 'Заказать инженерно-геологические изыскания.', 'high', 12, 4);
-  perform pg_temp.task(o4, iv, 'Расчистка участка', 'Вывоз мусора, спил двух деревьев по согласованию.', 'low', 25, 3);
+  perform demo.task(o4, sk, 'Геология участка', 'Заказать инженерно-геологические изыскания.', 'high', 12, 4);
+  perform demo.task(o4, iv, 'Расчистка участка', 'Вывоз мусора, спил двух деревьев по согласованию.', 'low', 25, 3);
 
-  t := pg_temp.task(o5, pt, 'Демонтаж кровли', 'Снятие старого покрытия, 1 200 м².', 'urgent', -20, 85,
+  t := demo.task(o5, pt, 'Демонтаж кровли', 'Снятие старого покрытия, 1 200 м².', 'urgent', -20, 85,
     '{in_progress}');
-  perform pg_temp.comment(t, pt, 'Работы остановлены, ждём решения по смете.', 70);
-  perform pg_temp.task(o5, sk, 'Обследование перекрытий', 'Заключение по усилению перекрытий 2-го этажа.', 'high', -30, 80,
+  perform demo.comment(t, pt, 'Работы остановлены, ждём решения по смете.', 70);
+  perform demo.task(o5, sk, 'Обследование перекрытий', 'Заключение по усилению перекрытий 2-го этажа.', 'high', -30, 80,
     '{in_progress,review,accepted}');
 
-  perform pg_temp.login(m);
+  perform demo.login(m);
   insert into public.expenses (object_id, category, amount, spent_on, description) values
     (o1, 'materials', 6850000, current_date - 95, 'Бетон В25, 1 140 м³'),
     (o1, 'materials', 3120000, current_date - 40, 'Арматура А500С, 48 т'),
@@ -160,25 +169,32 @@ begin
     (o4, 'other',      120000, current_date - 5,  'Топосъёмка участка'),
     (o5, 'labor',     1300000, current_date - 70, 'Демонтажные работы'),
     (o5, 'other',      450000, current_date - 80, 'Техническое обследование');
-end $$;
 
-alter table public.tasks disable trigger tasks_before_update;
+  alter table public.tasks disable trigger tasks_before_update;
 
-update public.tasks t
-set created_at = now() - make_interval(days => a.age, hours => 3)
-from pg_temp.seed_age a
-where a.task_id = t.id;
+  update public.tasks t
+  set created_at = now() - make_interval(days => a.age, hours => 3)
+  from demo.seed_age a
+  where a.task_id = t.id;
 
-update public.task_history h
-set created_at = t.created_at + (x.rn - 1) * ((now() - interval '3 hours' - t.created_at) / x.cnt)
-from (
-  select id, row_number() over w as rn, count(*) over (partition by task_id) as cnt
-  from public.task_history
-  window w as (partition by task_id order by id)
-) x, public.tasks t
-where x.id = h.id and t.id = h.task_id;
+  update public.task_history h
+  set created_at = t.created_at + (x.rn - 1) * ((now() - interval '3 hours' - t.created_at) / x.cnt)
+  from (
+    select id, row_number() over w as rn, count(*) over (partition by task_id) as cnt
+    from public.task_history
+    window w as (partition by task_id order by id)
+  ) x, public.tasks t
+  where x.id = h.id and t.id = h.task_id;
 
-update public.tasks t
-set updated_at = (select max(created_at) from public.task_history h where h.task_id = t.id);
+  update public.tasks t
+  set updated_at = (select max(created_at) from public.task_history h where h.task_id = t.id);
 
-alter table public.tasks enable trigger tasks_before_update;
+  alter table public.tasks enable trigger tasks_before_update;
+  perform set_config('request.jwt.claims', '', true);
+end;
+$fn$;
+
+revoke all on all functions in schema demo from public, anon, authenticated;
+revoke all on all tables in schema demo from public, anon, authenticated;
+
+select demo.reset();
