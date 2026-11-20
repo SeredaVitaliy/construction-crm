@@ -99,7 +99,8 @@ npm run dev
 
 ### 3. Демо-стенд
 
-- `VITE_DEMO_PASSWORD` в переменных Netlify включает кнопки быстрого входа (пароль демо-пользователей).
+- `VITE_DEMO_PASSWORD` в переменных Netlify включает кнопки быстрого входа. Можно задать общий пароль
+  или шаблон: `{user}123` превращается в `manager123` для `manager@example.com`.
 - Бесплатный проект Supabase засыпает после недели без запросов. Workflow `keep-alive.yml` раз в два дня
   делает запрос к базе. Для него в GitHub → Settings → Secrets and variables → Actions → **Variables**
   нужны `SUPABASE_URL` и `SUPABASE_PUBLISHABLE_KEY` (те же публичные значения, что и во фронте).
