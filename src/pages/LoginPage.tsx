@@ -7,6 +7,7 @@ import { Brand } from '@/components/Brand';
 type FormValues = { email: string; password: string };
 
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD;
+const demoPassword = (email: string) => (DEMO_PASSWORD ?? '').replace('{user}', email.split('@')[0]);
 const DEMO_USERS = [
   { email: 'manager@example.com', label: 'Постановщик' },
   { email: 'ivanov@example.com', label: 'Исполнитель' },
@@ -84,7 +85,7 @@ export function LoginPage() {
                     key={u.email}
                     block
                     disabled={submitting}
-                    onClick={() => enter({ email: u.email, password: DEMO_PASSWORD })}
+                    onClick={() => enter({ email: u.email, password: demoPassword(u.email) })}
                   >
                     {u.label}
                   </Button>
