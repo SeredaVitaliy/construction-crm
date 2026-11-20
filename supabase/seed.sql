@@ -3,7 +3,7 @@ revoke all on schema demo from public;
 
 create table if not exists demo.seed_age (task_id uuid primary key, age int not null);
 
-create or replace function demo.login(p_uid uuid) returns void language sql as $$
+create or replace function demo.login(p_uid uuid) returns void language sql set search_path = '' as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_uid)::text, true);
 $$;
 
@@ -17,7 +17,7 @@ create or replace function demo.task(
   p_age      int,
   p_path     public.task_status[] default '{}',
   p_comments text[] default '{}'
-) returns uuid language plpgsql as $$
+) returns uuid language plpgsql set search_path = '' as $$
 declare
   v_manager uuid := (select id from public.profiles where role = 'manager' order by created_at limit 1);
   v_id      uuid;
@@ -43,7 +43,7 @@ begin
 end;
 $$;
 
-create or replace function demo.comment(p_task uuid, p_author uuid, p_body text, p_hours_ago int) returns void language plpgsql as $$
+create or replace function demo.comment(p_task uuid, p_author uuid, p_body text, p_hours_ago int) returns void language plpgsql set search_path = '' as $$
 declare v_id bigint;
 begin
   perform demo.login(p_author);
@@ -52,7 +52,7 @@ begin
 end;
 $$;
 
-create or replace function demo.reset() returns void language plpgsql as $fn$
+create or replace function demo.reset() returns void language plpgsql set search_path = '' as $fn$
 declare
   m  uuid := (select id from public.profiles where email = 'manager@example.com');
   iv uuid := (select id from public.profiles where email = 'ivanov@example.com');
