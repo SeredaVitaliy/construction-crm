@@ -2,7 +2,7 @@ name: Keep demo alive
 
 on:
   schedule:
-    - cron: '17 6 */2 * *'
+    - cron: '17 6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,5 @@ jobs:
             echo "Не заданы переменные SUPABASE_URL и SUPABASE_PUBLISHABLE_KEY (Settings → Secrets and variables → Actions → Variables)"
             exit 1
           fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' "$SUPABASE_URL/rest/v1/objects?select=id&limit=1" \
-            -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
-          echo "HTTP $code"
-          [ "$code" != "000" ] && [ "$code" -lt 500 ]
+          curl -sS --fail-with-body -X POST "$SUPABASE_URL/rest/v1/rpc/ping" \
+            -H "apikey: $SUPABASE_KEY" -H "Content-Type: application/json" -d '{}'

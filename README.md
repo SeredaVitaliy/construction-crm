@@ -101,8 +101,8 @@ npm run dev
 
 - `VITE_DEMO_PASSWORD` в переменных Netlify включает кнопки быстрого входа. Можно задать общий пароль
   или шаблон: `{user}123` превращается в `manager123` для `manager@example.com`.
-- Бесплатный проект Supabase засыпает после недели без запросов. Workflow `keep-alive.yml` раз в два дня
-  делает запрос к базе. Для него в GitHub → Settings → Secrets and variables → Actions → **Variables**
+- Бесплатный проект Supabase засыпает после недели без запросов. Workflow `keep-alive.yml` каждый день
+  вызывает функцию `ping()` — единственное, что доступно без входа. Для него в GitHub → Settings → Secrets and variables → Actions → **Variables**
   нужны `SUPABASE_URL` и `SUPABASE_PUBLISHABLE_KEY` (те же публичные значения, что и во фронте).
 
 ### 4. Проверки
@@ -110,7 +110,7 @@ npm run dev
 Всё ниже запускается в GitHub Actions на каждый пуш и пулл-реквест (`.github/workflows/ci.yml`):
 сборка с проверкой типов, тесты базы и сквозной сценарий в браузере.
 
-**Тесты базы** (91 проверка):
+**Тесты базы** (93 проверки):
 
 ```bash
 PGHOST=localhost PGUSER=postgres npm run test:db
