@@ -119,3 +119,9 @@ select t.fails($$ select * from expenses $$,       'permission denied', 'anon н
 select t.fails($$ select * from task_comments $$,  'permission denied', 'anon не читает комментарии');
 select t.fails($$ select * from object_summary $$, 'permission denied', 'anon не читает сводку');
 reset role;
+
+\echo '--- Проверка доступности (keep-alive)'
+set role anon;
+select t.ok((select public.ping()) is not null, 'anon может вызвать ping()');
+select t.fails($$ select * from objects $$, 'permission denied', 'при этом данные anon по-прежнему недоступны');
+reset role;
