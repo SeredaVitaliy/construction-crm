@@ -11,6 +11,15 @@
 
 - Демо: https://construction-crm-sereda.netlify.app — кнопки «Постановщик» и «Исполнитель» на экране входа.
   Данные демо каждую ночь возвращаются в исходное состояние, так что можно смело всё трогать.
+
+  | Роль | Кто | Email | Пароль |
+  |---|---|---|---|
+  | Постановщик | Анна Смирнова, руководитель проектов | `manager@example.com` | `manager123` |
+  | Исполнитель | Иван Иванов, прораб | `ivanov@example.com` | `ivanov123` |
+  | Исполнитель | Пётр Петров, монтажник | `petrov@example.com` | `petrov123` |
+  | Исполнитель | Олег Козлов, электрик | `kozlov@example.com` | `kozlov123` |
+  | Исполнитель | Мария Соколова, инженер ПТО | `sokolova@example.com` | `sokolova123` |
+
 - Как устроено простыми словами: [docs/for-manager.md](docs/for-manager.md)
 - Решения и допущения: [docs/decisions.md](docs/decisions.md)
 - Первая версия (тестовое задание) сохранена в ветке [`test-assignment`](../../tree/test-assignment)
